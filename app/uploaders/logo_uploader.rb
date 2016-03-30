@@ -23,7 +23,7 @@ class LogoUploader < CarrierWave::Uploader::Base
   # end
 
   # Process files as they are uploaded:
-  process :resize_to_fill => [Settings.group.logo.width, Settings.group.logo.height]
+  process :resize_to_fill => [Settings.group.logo.full.width, Settings.group.logo.full.height]
 
   # def scale(width, height)
   #   # do something
@@ -34,6 +34,10 @@ class LogoUploader < CarrierWave::Uploader::Base
     process :resize_to_fill => [Settings.group.logo.thumb.width, Settings.group.logo.thumb.height]
   end
 
+  version :avatar do
+    process :resize_to_fill => [Settings.group.logo.avatar.width, Settings.group.logo.avatar.height]
+  end
+
   # Add a white list of extensions which are allowed to be uploaded.
   # For images you might use something like this:
   def extension_white_list
@@ -42,8 +46,8 @@ class LogoUploader < CarrierWave::Uploader::Base
 
   # Override the filename of the uploaded files:
   # Avoid using model.id or version_name here, see uploader/store.rb for details.
-  # def filename
-  #   "something.jpg" if original_filename
-  # end
+  def filename
+    "logo.jpg" if original_filename
+  end
 
 end

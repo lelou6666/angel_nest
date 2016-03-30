@@ -1,8 +1,14 @@
 .DS_Store
+.idea
 .bundle
+
+public/uploads/
+
 db/*.sqlite3
 log/*.log
 tmp/
-.sass-cache/
-config/database.yml
 
+config/database.yml
+.sass-cache
+
+coverage/
