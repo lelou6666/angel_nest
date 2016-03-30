@@ -3,13 +3,40 @@ class UsersController < ApplicationController
 
   has_scope :page, :default => 1
 
+  before_filter :hide_sidebar, :only => [:show, :message_inboxes]
+
+  def index
+    respond_to do |format|
+      format.json { render :json => collection.for_auto_suggest }
+      format.html { render 'users/_index', :locals => { :meta => {} } }
+    end
+  end
+
   def home
     @micro_posts = resource.followed_micro_posts.page(params[:p])
   end
 
   def show
-    hide_sidebar
     @micro_posts = resource.micro_posts.page(params[:p])
+  end
+
+  def message_inboxes
+    message_type = params[:type].try(:to_sym)
+
+    @messages = case message_type
+      when :inbox_messages     then current_user.inbox_messages
+      when :sent_messages      then current_user.sent_messages
+      when :archived_messages  then current_user.archived_messages
+      when :inbox_proposals    then current_user.inbox_proposals
+      when :sent_proposals     then current_user.sent_proposals
+      when :archived_proposals then current_user.archived_proposals
+      else redirect_to my_message_inbox_path(:inbox_messages)
+    end
+
+    case message_type
+      when /_messages/  then render 'message_inboxes'
+      when /_proposals/ then render 'proposal_inboxes'
+    end
   end
 
   def add_micro_post
@@ -40,6 +67,10 @@ class UsersController < ApplicationController
   end
 
   private
+
+  def collection
+    User.page(params[:page])
+  end
 
   def resource
     if params.key?(:username)

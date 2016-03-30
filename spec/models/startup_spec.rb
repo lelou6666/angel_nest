@@ -174,64 +174,13 @@ describe Startup do
       subject.member_title(user).should == 'CEO'
       subject.user_role(user).should == 'Member'
     end
-  end
 
-  describe "proposals" do
-    let(:proposal)  { Proposal.make }
-    let(:investor1) { User.make!(:investor_profile => InvestorProfile.make!) }
-    let(:investor2) { User.make!(:investor_profile => InvestorProfile.make!) }
+    it "invites the user" do
+      user = User.make!(:email => 'hello@world.com')
+      subject.invite_or_attach_user(:member, { :email => 'hello@world.com' })
 
-    it "creates a draft proposal" do
-      subject.create_proposal(proposal.attributes)
-
-      subject.proposals.count.should == 1
-      subject.proposals.draft.count.should == 1
-      subject.proposals.submitted.count.should == 0
-      subject.proposals.first.proposal_stage_identifier.should == 'draft'
-    end
-
-    it "submits proposal to no investor" do
-      subject.submit_proposal([], proposal.attributes)
-
-      subject.proposals.count.should == 1
-      subject.proposals.draft.count.should == 1
-      subject.proposals.submitted.count.should == 0
-    end
-
-    it "submits proposal to one investor" do
-      subject.submit_proposal(investor1, proposal.attributes, 'submitted')
-
-      subject.proposals.count.should == 1
-      subject.proposals.draft.count.should == 0
-      subject.proposals.submitted.count.should == 1
-      investor1.proposals.count.should == 1
-      subject.proposals.first.proposal_stage_identifier.should == 'submitted'
-    end
-
-    it "submits proposal to many investors" do
-      subject.submit_proposal([investor1, investor2], proposal.attributes, 'submitted')
-
-      subject.proposals.count.should == 1
-      subject.proposals.draft.count.should == 0
-      subject.proposals.submitted.count.should == 1
-      investor1.proposals.count.should == 1
-      investor2.proposals.count.should == 1
-    end
-
-    it "edits a proposal" do
-      subject.submit_proposal(investor1, proposal.attributes)
-      subject.update_proposal(Proposal.last, investor2, Proposal.make(:pitch => 'Hello world').attributes)
-
-      Proposal.last.pitch.should == 'Hello world'
-      Proposal.last.investors.count.should == 1
-      Proposal.last.investors.first.should == investor2
-    end
-
-    it "preserves proposal details structure" do
-      proposal_attributes = proposal.attributes.merge(:pitch => 'Hello world')
-      subject.submit_proposal(investor1, proposal_attributes)
-
-      Proposal.last.pitch.should == 'Hello world'
+      subject.members.last.should == user
+      subject.user_meta(user).confirmed.should == true
     end
   end
 
@@ -244,8 +193,8 @@ describe Startup do
 
     it "reads the saved logo" do
       uploader.store!(load_file('file.jpg'))
-      uploader.to_s.should match(/startup.*file\.jpg/)
-      uploader.thumb.to_s.should match(/startup.*file\.jpg/)
+      uploader.to_s.should match(/logo\.jpg/)
+      uploader.thumb.to_s.should match(/logo\.jpg/)
     end
 
     it "reads the default logo" do

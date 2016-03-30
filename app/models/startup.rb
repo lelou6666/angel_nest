@@ -5,6 +5,8 @@ class Startup < ActiveRecord::Base
 
   mount_uploader :logo, LogoUploader
 
+  has_many :photos, :class_name => 'StartupPhoto'
+
   has_many :startup_users
   has_many :users,      :through => :startup_users
   has_many :members,    :through => :startup_users, :source => :user, :conditions => { 'startup_users.role_identifier' => 'member' }
@@ -13,6 +15,16 @@ class Startup < ActiveRecord::Base
   has_many :incubators, :through => :startup_users, :source => :user, :conditions => { 'startup_users.role_identifier' => 'incubator' }
 
   has_many :proposals
+
+  attr_accessible :name,
+                  :pitch,
+                  :funds_to_raise,
+                  :stage_identifier,
+                  :market_identifier,
+                  :location,
+                  :description
+
+  accepts_nested_attributes_for :photos, :limit => 5, :allow_destroy => true, :reject_if => :all_blank
 
   validates :name,              :presence     => true,
                                 :uniqueness   => true,
@@ -66,11 +78,14 @@ class Startup < ActiveRecord::Base
     user = User.find_by_email(attributes[:email]) || attributes[:email] # && TODO: send an invitation email
 
     attach_user(user, role_identifier, attributes[:member_title])
+
+    # TODO: remove the confirmation and make the target user to confirm the invite manually
+    confirm_user(user, role_identifier)
   end
 
   def attach_user(user, role_identifier = :member, member_title = '')
     startup_users.create(
-      :user_email      => (user.try(:email) || user),
+      :user_email      => (user.is_a?(User) ? user.email : user),
       :role_identifier => role_identifier.to_s,
       :member_title    => member_title,
     ) unless user_meta(user, role_identifier)
@@ -94,7 +109,7 @@ class Startup < ActiveRecord::Base
 
   def user_meta(user, role_identifier = :member)
     startup_users.where(
-      :user_email      => (user.try(:email) || user),
+      :user_email      => (user.is_a?(User) ? user.email : user),
       :role_identifier => role_identifier.to_s
     ).first
   end
@@ -107,18 +122,20 @@ class Startup < ActiveRecord::Base
     I18n.t "startup.role_identifiers.#{user_meta(user).role_identifier}"
   end
 
-  def create_proposal(attributes = {})
-    proposals.create(attributes)
-  end
+  def create_proposal(investors = [], attributes = {}, stage = 'draft', private_message = I18n.t('text.default_text_for_proposal_review'))
+    raise Exceptions::NotAllowed if proposals.count >= Settings.startup.proposal.limit
 
-  def submit_proposal(investors = [], attributes = {}, stage = 'draft')
-    proposal = create_proposal(attributes)
+    proposal = proposals.create(attributes)
     update_and_submit_proposal(proposal, investors, attributes, stage)
+    send_private_message_to_investors(proposal, investors, private_message) if stage == 'submitted'
+    proposal
   end
 
-  def update_proposal(proposal, investors = [], attributes = {}, stage = 'draft')
+  def update_proposal(proposal, investors = [], attributes = {}, stage = 'draft', private_message = I18n.t('text.default_text_for_proposal_review'))
     proposal.update_attributes(attributes)
     update_and_submit_proposal(proposal, investors, attributes, stage)
+    send_private_message_to_investors(proposal, investors, private_message) if stage == 'submitted'
+    proposal
   end
 
   def all_users
@@ -131,5 +148,11 @@ class Startup < ActiveRecord::Base
     proposal.update_attribute(:proposal_stage_identifier, stage)
     proposal.submit(investors)
     proposal
+  end
+
+  def send_private_message_to_investors(proposal, investors, private_message)
+    [investors].flatten.each do |investor|
+      founder.send_private_message(investor, private_message, :proposal_id => proposal.id)
+    end
   end
 end

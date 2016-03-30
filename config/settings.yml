@@ -1,8 +1,14 @@
 currencies:
   - USD
   - CNY
+recipient_limit:
+  private_messages: 1
+  proposals: 5
 group:
   logo:
+    gallery:
+      width: 690
+      height: 450
     full:
       width: 460
       height: 300
@@ -14,6 +20,7 @@ group:
       height: 50
 startup:
   proposal:
+    limit: 1
     questions:
       en:
         - Product or service introduction.

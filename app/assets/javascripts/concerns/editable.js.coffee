@@ -3,7 +3,7 @@ jQuery ->
   $('.inline_editable .editable').livequery(->
     $(@).hide()
   )
-  $('.inline_edtiable_container .mini_profile').live('mouseenter', ->
+  $('.inline_editable_container .mini_profile').live('mouseenter', ->
     if $('.inline_editable .closable', @).length > 0
       $('.inline_editable .closable', @).show()
     else
@@ -45,7 +45,7 @@ jQuery ->
   edit_action = (parent) ->
     edit_target = parent.data('edit_target')
     cached_html = $(edit_target).html()
-    target_link = $('a', parent).attr('href')
+    target_link = $(parent).data('edit_href') || $('a', parent).attr('href')
 
     $(edit_target).wrapInner('<div class="cached" />') unless $('.cached', edit_target).length > 0
     $('.cached', edit_target).after('<div class="inline_edit"></div>') unless $('.inline_edit', edit_target).length > 0
@@ -108,9 +108,11 @@ jQuery ->
     e.preventDefault()
   )
 
-  $('.inline_edtiable_container').delegate('form', 'submit', ->
-    inline_popup = $(@).parent().hasClass('inline_popup')
+  $('.inline_editable_container').delegate('form', 'submit', ->
+    return true if $(@).parents('.follow_button').length > 0
+
     edit_target  = $(@).parent().parent()
+    inline_popup = $(@).parent().hasClass('inline_popup') or edit_target.hasClass('inline_popup')
     target_link  = edit_target.data('target_link')
 
     $(@).ajaxSubmit(

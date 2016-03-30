@@ -1,25 +1,30 @@
 require File.dirname(__FILE__) + '/../spec/support/blueprints'
 
+p 'Cleaning up temp data ...'
+
+FileUtils.rm_rf(File.join(Rails.root, 'public', 'uploads'))
+
+p 'Finished cleaning up temp data.'
+
 p 'Creating seeds data for development ...'
 
 # primary user
+p ' > users ...'
 
 user = User.make!({
   :username => 'fredwu',
   :name     => 'Fred Wu',
-  :email    => 'ifredwu@gmail.com',
+  :email    => 'test@example.com',
   :password => 'password',
 })
-user.confirm!
 
 # more users
 
-40.times do
-  u = User.make!
-  u.confirm!
-end
+40.times { User.make! }
+User.all.each { |u| u.confirm! }
 
 # investors and startups
+p ' > investors and startups ...'
 
 10.times { InvestorProfile.make! }
 20.times { Startup.make! }
@@ -34,17 +39,22 @@ end
 user.investor_profile = InvestorProfile.make!
 
 # startup founders and proposals
+p ' > startup founders and proposals ...'
 
 Startup.all.each do |startup|
   u = User.new_users.first
   startup.attach_user(u, :member, Faker::Lorem.word)
   startup.confirm_user(u)
-  2.times do
-    startup.submit_proposal(User.investors.sample, Proposal.make.attributes, 'draft')
+
+  if rand(2) == 0
+    startup.create_proposal(User.investors.sample, Proposal.make.attributes, 'draft')
+  else
+    startup.create_proposal(user, Proposal.make.attributes, 'submitted')
   end
 end
 
 # follow/unfollow
+p ' > follow/unfollow ...'
 
 User.limit(10).each do |u|
   user.follow(u)
@@ -55,23 +65,30 @@ User.limit(20).each do |u|
 end
 
 # micro posts
+p ' > micro posts ...'
 
-(5 + rand(5)).times do
+(3 + rand(3)).times do
   User.order('RAND()').each do |u|
-    u.add_micro_post(Faker::Lorem.sentences * ' ')
+    u.add_micro_post(Faker::Lorem.sentence)
   end
 end
 
 # private messages
+p ' > private messages ...'
 
 User.all.each do |u|
-  10.times do
-    u.send_private_message(User.order('RAND()').first, Faker::Lorem.sentences * ' ')
+  3.times do
+    target_user = User.order('RAND()').first
+    u.send_private_message(user, Faker::Lorem.sentence) if rand(5) == 0
+    u.send_private_message(target_user, Faker::Lorem.sentence)
+    (1 + rand(1)).times do
+      rand(2).times { target_user.reply_private_message(Message.topics.last, Faker::Lorem.sentence) }
+      rand(2).times { u.reply_private_message(Message.topics.last, Faker::Lorem.sentence) }
+    end
   end
 
-  u.sent_messages.order('RAND()').limit(5).each do |msg|
-    msg.mark_as_read!
-  end
+  u.sent_messages.order('RAND()').limit(3).each { |msg| msg.mark_as_read! }
+  u.sent_messages.order('RAND()').limit(3).each { |msg| msg.mark_as_archived! }
 end
 
 p 'Finished creating seeds data for development.'

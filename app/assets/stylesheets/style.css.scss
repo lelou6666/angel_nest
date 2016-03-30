@@ -107,6 +107,10 @@ a {
   &:hover   { color: $link_colour_h; text-decoration: underline; }
 }
 
+li a.current {
+  font-weight: bold;
+}
+
 .first {
   margin-left: 0 !important;
 }
@@ -118,7 +122,8 @@ a {
 .new {
   color: $error_colour;
 
-  &:hover {
+  &:hover,
+  &:visited {
     color: darken($error_colour, 20%);
   }
 }
@@ -170,6 +175,10 @@ div.message {
   margin-left: $input_margin;
 }
 
+#new_private_message .as-results {
+  margin-left: 0;
+}
+
 /* ------------------------------
   form
 ------------------------------ */
@@ -193,7 +202,7 @@ form {
   }
 
   .input {
-    margin-bottom: 10px;
+    margin-bottom: $viewport_padding;
   }
 
   input.string,
@@ -407,10 +416,15 @@ nav.pagination {
         margin-left: $avatar_size + 10px;
         min-height: $avatar_size;
 
-        .message_meta {
+        .message_meta,
+        .message_meta_secondary {
           color: $secondary_colour_h;
           font-size: $font_size_small;
           margin-bottom: 5px;
+        }
+
+        .message_meta_secondary {
+          color: $secondary_colour;
         }
       }
     }
@@ -418,6 +432,10 @@ nav.pagination {
 
   #gallery {
     margin-bottom: 10px;
+
+    #slideshow {
+      border: none;
+    }
   }
 }
 
@@ -545,7 +563,7 @@ nav.pagination {
     }
   }
 
-  .grid_6 ul.resource_list {
+  #profile_team ul.resource_list {
     li.mini_profile {
       $profile_width: grid_cells(3);
 
@@ -581,7 +599,7 @@ nav.pagination {
       }
 
       ul {
-        li.location {
+        li.secondary {
           color: $secondary_colour_h;
           font-size: $font_size_tiny;
         }
@@ -623,6 +641,47 @@ form.multistage {
 
   h2 {
     margin-bottom: 10px;
+  }
+}
+
+form.read_only {
+  input.string, input.numeric, textarea {
+    border: none;
+    background: none;
+    resize: none;
+  }
+
+  .attribute {
+    display: table;
+    margin-bottom: $viewport_padding;
+  }
+}
+
+/* ------------------------------
+  private message
+------------------------------ */
+
+#business_proposal_private_message {
+  > h2 {
+    border-bottom: 1px dotted $secondary_colour_h;
+    padding-bottom: 10px;
+    margin-bottom: 10px;
+  }
+
+  ul#messages {
+    li:first-child hr {
+      display: none;
+    }
+  }
+}
+
+#action_buttons {
+  > form {
+    float: left;
+
+    input {
+      margin: 0 20px 10px 0;
+    }
   }
 }
 
